@@ -12,6 +12,5 @@ public class RegisterUserDto {
     private String password;
     private String name;
     private String phonenumber;
-    private String gender;
     private String profileImage;
 }

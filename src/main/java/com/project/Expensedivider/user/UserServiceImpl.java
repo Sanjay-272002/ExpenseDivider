@@ -20,7 +20,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCrypt;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-
+import jakarta.servlet.http.Cookie;
 import java.io.IOException;
 import java.util.Base64;
 import java.util.Collections;
@@ -47,7 +47,6 @@ public class UserServiceImpl implements  UserService{
                 .email(request.getEmail())
                 .password(BCrypt.hashpw(request.getPassword(), BCrypt.gensalt()))
                 .phonenumber(request.getPhonenumber())
-                .gender(request.getGender())
                 .build();
         this.userRepository.save(user);
     }
@@ -73,9 +72,27 @@ public class UserServiceImpl implements  UserService{
         revokeAllUserTokens(user);
         saveUserToken(user, jwtToken);
         return LoginResponse.builder()
-                .accessToken(jwtToken)
-                .refreshToken(refreshToken)
+                .accessToken("Bearer token in cookie")  // Optionally return a message indicating the cookies are set
+                .refreshToken("Bearer refresh token in cookie")
                 .build();
+    }
+
+    private void setJwtCookie(HttpServletResponse response, String token) {
+        Cookie jwtCookie = new Cookie("accessToken", token);
+        jwtCookie.setHttpOnly(true);  // Make sure the cookie can't be accessed by JavaScript
+        jwtCookie.setSecure(true);    // Only send the cookie over HTTPS
+        jwtCookie.setPath("/");       // The cookie is valid for the entire application
+        jwtCookie.setMaxAge(3600);    // Set expiration time for the cookie (1 hour)
+        response.addCookie(jwtCookie);
+    }
+
+    private void setRefreshTokenCookie(HttpServletResponse response, String refreshToken) {
+        Cookie refreshTokenCookie = new Cookie("refreshToken", refreshToken);
+        refreshTokenCookie.setHttpOnly(true);  // Prevent JavaScript access
+        refreshTokenCookie.setSecure(true);    // Only send over HTTPS
+        refreshTokenCookie.setPath("/");       // Valid for the entire application
+        refreshTokenCookie.setMaxAge(30 * 24 * 60 * 60);  // Refresh token has a longer expiration time (e.g., 30 days)
+        response.addCookie(refreshTokenCookie);
     }
 
     @Override
@@ -122,7 +139,7 @@ public class UserServiceImpl implements  UserService{
              base64Image = Base64.getEncoder().encodeToString(user.getProfileImage());
         }
 
-        return RegisterUserDto.builder().userid(user.getId()).name(user.getName()).email(user.getEmail()).phonenumber(user.getPhonenumber()).gender(user.getGender()).profileImage(base64Image).build();
+        return RegisterUserDto.builder().userid(user.getId()).name(user.getName()).email(user.getEmail()).phonenumber(user.getPhonenumber()).profileImage(base64Image).build();
     }
     @Transactional
     @Override
@@ -137,9 +154,6 @@ public class UserServiceImpl implements  UserService{
         }
         if (request.getPhonenumber() != null) {
             user.setPhonenumber(request.getPhonenumber());
-        }
-        if (request.getGender() != null) {
-            user.setGender(request.getGender());
         }
         if (request.getProfileImage() != null) {
             byte[] decodedImage = Base64.getDecoder().decode(request.getProfileImage());
@@ -176,7 +190,12 @@ public class UserServiceImpl implements  UserService{
         if (userEmail != null) {
             var user = this.userRepository.findByEmail(userEmail)
                     .orElseThrow();
-            if (jwtService.isTokenValid(refreshToken, user)) {
+            if (!jwtService.isTokenValid(refreshToken, user)) {
+                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                response.getWriter().write("Invalid or expired refresh token.");
+                return;
+            }
+
                 var accessToken = jwtService.generateToken(user);
                 revokeAllUserTokens(user);
                 saveUserToken(user, accessToken);
@@ -185,7 +204,7 @@ public class UserServiceImpl implements  UserService{
                         .refreshToken(refreshToken)
                         .build();
                 new ObjectMapper().writeValue(response.getOutputStream(), authResponse);
-            }
+
         }
     }
 }

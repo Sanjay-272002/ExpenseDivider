@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationProvider;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -56,7 +57,7 @@ public class SecurityConfiguration {
                         .requestMatchers(WHITE_LIST_URL)
                         .permitAll() // Matchers updated to AntPathRequestMatcher
                         .anyRequest().authenticated()
-                ).headers(headers -> headers
+                ).cors(Customizer.withDefaults()).headers(headers -> headers
                         .httpStrictTransportSecurity(HeadersConfigurer.HstsConfig::disable) // Disable HSTS in dev
                 )
                 .sessionManagement(session -> session
@@ -90,8 +91,8 @@ public class SecurityConfiguration {
     CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
 
-        configuration.setAllowedOrigins(List.of("http://localhost:8005"));
-        configuration.setAllowedMethods(List.of("GET","POST"));
+        configuration.setAllowedOrigins(List.of("http://localhost:3000"));
+        configuration.setAllowedMethods(List.of("GET","POST","PUT","PATCH","DELETE"));
         configuration.setAllowedHeaders(List.of("Authorization","Content-Type"));
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
