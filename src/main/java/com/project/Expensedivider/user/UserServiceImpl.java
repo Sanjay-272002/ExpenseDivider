@@ -52,7 +52,7 @@ public class UserServiceImpl implements  UserService{
     }
 
     @Override
-    public LoginResponse authenticate(LoginUserDto request) throws UserException {
+    public LoginResponse authenticate(LoginUserDto request,HttpServletResponse response) throws UserException {
 
         authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
@@ -71,8 +71,12 @@ public class UserServiceImpl implements  UserService{
         refreshToken = jwtService.generateRefreshToken(user);
         revokeAllUserTokens(user);
         saveUserToken(user, jwtToken);
+
+        setJwtCookie(response, jwtToken); // Set the access token in a cookie
+        setRefreshTokenCookie(response, refreshToken); // Set the refresh token in a cookie
+        System.out.print("authenticate calls");
         return LoginResponse.builder()
-                .accessToken("Bearer token in cookie")  // Optionally return a message indicating the cookies are set
+                .accessToken("Bearer token in cookie")
                 .refreshToken("Bearer refresh token in cookie")
                 .build();
     }
@@ -88,10 +92,10 @@ public class UserServiceImpl implements  UserService{
 
     private void setRefreshTokenCookie(HttpServletResponse response, String refreshToken) {
         Cookie refreshTokenCookie = new Cookie("refreshToken", refreshToken);
-        refreshTokenCookie.setHttpOnly(true);  // Prevent JavaScript access
-        refreshTokenCookie.setSecure(true);    // Only send over HTTPS
-        refreshTokenCookie.setPath("/");       // Valid for the entire application
-        refreshTokenCookie.setMaxAge(30 * 24 * 60 * 60);  // Refresh token has a longer expiration time (e.g., 30 days)
+        refreshTokenCookie.setHttpOnly(true);
+        refreshTokenCookie.setSecure(true);
+        refreshTokenCookie.setPath("/");
+        refreshTokenCookie.setMaxAge(30 * 24 * 60 * 60); //30days
         response.addCookie(refreshTokenCookie);
     }
 

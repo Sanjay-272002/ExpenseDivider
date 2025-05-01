@@ -18,7 +18,7 @@ public interface UserService {
 
      void register(RegisterUserDto request) throws UserException;
 
-    LoginResponse authenticate(LoginUserDto request) throws UserException;
+    LoginResponse authenticate(LoginUserDto request,HttpServletResponse response) throws UserException;
     List<User> returnUserList() throws UserException;
     void refreshToken(HttpServletRequest request, HttpServletResponse response) throws IOException;
      void revokeAllUserTokens(User user) ;

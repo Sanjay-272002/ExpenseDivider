@@ -22,8 +22,9 @@ public class AuthUserController {
         return ResponseEntity.ok("User Registered Successfully");
     }
     @PostMapping("/login")
-    public ResponseEntity<LoginResponse> authenticate( @RequestBody LoginUserDto request) throws UserException{
-        return ResponseEntity.ok(userService.authenticate(request));
+    public ResponseEntity<LoginResponse> authenticate( @RequestBody LoginUserDto request,HttpServletResponse response) throws UserException{
+
+        return ResponseEntity.ok(userService.authenticate(request,response));
     }
 
     @PostMapping("/refresh-token")
