@@ -5,8 +5,7 @@ WORKDIR /app
 # Copy only files needed for dependency resolution first for better caching
 COPY build.gradle settings.gradle ./
 COPY gradle gradle
-# Make gradlew executable
-RUN chmod +x gradlew
+
 
 # Download dependencies (optional cache optimization)
 RUN ./gradlew dependencies --no-daemon || true
