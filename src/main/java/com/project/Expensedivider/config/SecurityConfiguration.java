@@ -1,5 +1,7 @@
 package com.project.Expensedivider.config;
 
+import com.project.Expensedivider.user.UserService;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,8 +34,8 @@ public class SecurityConfiguration {
     private final AuthenticationProvider authenticationProvider;
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final LogoutHandler logoutHandler;
-
-
+    private final OauthSuccessHandler oauthsuccessHandler;
+    private final UserService userService;
 
     private static final String[] WHITE_LIST_URL = {"/auth/**",
             "/v2/api-docs",
@@ -59,6 +61,8 @@ public class SecurityConfiguration {
                         .anyRequest().authenticated()
                 ).cors(Customizer.withDefaults()).headers(headers -> headers
                         .httpStrictTransportSecurity(HeadersConfigurer.HstsConfig::disable) // Disable HSTS in dev
+                ).oauth2Login(oauth2 -> oauth2
+                        .successHandler(oauthsuccessHandler)
                 )
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS) // Stateless session configuration
@@ -67,8 +71,23 @@ public class SecurityConfiguration {
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .logout(logout ->
                         logout.logoutUrl("/api/v1/auth/logout")
-                                .addLogoutHandler(logoutHandler)
-                                .logoutSuccessHandler((request, response, authentication) -> SecurityContextHolder.clearContext())
+                                .addLogoutHandler((request, response, auth) -> {
+                                    for (Cookie cookie : request.getCookies()) {
+                                        String cookieName = cookie.getName();
+                                        Cookie cookieToDelete = new Cookie(cookieName, null);
+                                        cookieToDelete.setMaxAge(0);
+                                        cookieToDelete.setPath("/");
+                                        cookieToDelete.setHttpOnly(true);
+                                        response.addCookie(cookieToDelete);
+                                    }
+                                })
+                                .logoutSuccessHandler((request, response, authentication) -> {
+                                    System.out.println("logout handler works");
+                                    SecurityContextHolder.clearContext();
+//                                   userService.setJwtCookie(response,"eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJzYW5qYXlrdW1hcmFubmE3OTlAZ21haWwuY29tIiwiaWF0IjoxNzQ2MjA0MjE0LCJleHAiOjE3NDYyMDc4MTR9.3oiWJKqZx6eeJ6XI_8gYpBGPiTH6-_JNSylSe4NrebI",true);
+//                                   userService.setRefreshTokenCookie(response,"334455",true);
+//                                    response.setStatus(HttpServletResponse.SC_OK);
+                                })
                 ).exceptionHandling(exceptionHandling -> exceptionHandling
                         // Handle AccessDeniedException (403)
                         .accessDeniedHandler((request, response, accessDeniedException) -> {

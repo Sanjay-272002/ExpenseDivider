@@ -13,7 +13,6 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -35,7 +34,7 @@ public class UserServiceImpl implements  UserService{
     private final UserRepository userRepository;
     private final TokenRepository tokenRepository;
     private final GroupRepository groupRepository;
-    private final AuthenticationManager authenticationManager;
+//    private final AuthenticationManager authenticationManager;
     @Override
     public void register(RegisterUserDto request) throws UserException{
         Optional<User> emailcheck = this.userRepository.findByEmail(request.getEmail());
@@ -54,12 +53,12 @@ public class UserServiceImpl implements  UserService{
     @Override
     public LoginResponse authenticate(LoginUserDto request,HttpServletResponse response) throws UserException {
 
-        authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(
-                        request.getEmail(),
-                        request.getPassword()
-                )
-        );
+//        authenticationManager.authenticate(
+//                new UsernamePasswordAuthenticationToken(
+//                        request.getEmail(),
+//                        request.getPassword()
+//                )
+//        );
         var user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new UserException("User not found"));
         var jwtToken="";
@@ -72,8 +71,8 @@ public class UserServiceImpl implements  UserService{
         revokeAllUserTokens(user);
         saveUserToken(user, jwtToken);
 
-        setJwtCookie(response, jwtToken); // Set the access token in a cookie
-        setRefreshTokenCookie(response, refreshToken); // Set the refresh token in a cookie
+        setJwtCookie(response, jwtToken,false); // Set the access token in a cookie
+        setRefreshTokenCookie(response, refreshToken,false); // Set the refresh token in a cookie
         System.out.print("authenticate calls");
         return LoginResponse.builder()
                 .accessToken("Bearer token in cookie")
@@ -81,21 +80,27 @@ public class UserServiceImpl implements  UserService{
                 .build();
     }
 
-    private void setJwtCookie(HttpServletResponse response, String token) {
+   public  void setJwtCookie(HttpServletResponse response, String token,boolean islogout) {
         Cookie jwtCookie = new Cookie("accessToken", token);
         jwtCookie.setHttpOnly(true);  // Make sure the cookie can't be accessed by JavaScript
-        jwtCookie.setSecure(true);    // Only send the cookie over HTTPS
-        jwtCookie.setPath("/");       // The cookie is valid for the entire application
-        jwtCookie.setMaxAge(3600);    // Set expiration time for the cookie (1 hour)
+        jwtCookie.setSecure(false);    // Only send the cookie over HTTPS
+        jwtCookie.setPath("/");
+        if(islogout)
+            jwtCookie.setMaxAge(0);
+        else// The cookie is valid for the entire application
+             jwtCookie.setMaxAge(3600);    // Set expiration time for the cookie (1 hour)
         response.addCookie(jwtCookie);
     }
 
-    private void setRefreshTokenCookie(HttpServletResponse response, String refreshToken) {
+    public void setRefreshTokenCookie(HttpServletResponse response, String refreshToken,boolean islogout) {
         Cookie refreshTokenCookie = new Cookie("refreshToken", refreshToken);
         refreshTokenCookie.setHttpOnly(true);
         refreshTokenCookie.setSecure(true);
         refreshTokenCookie.setPath("/");
-        refreshTokenCookie.setMaxAge(30 * 24 * 60 * 60); //30days
+        if(islogout)
+            refreshTokenCookie.setMaxAge(0);
+        else
+            refreshTokenCookie.setMaxAge(30 * 24 * 60 * 60); //30days
         response.addCookie(refreshTokenCookie);
     }
 
@@ -168,6 +173,26 @@ public class UserServiceImpl implements  UserService{
     }
 
     @Override
+    public void handleOauthAuthentication(String name,String email,HttpServletResponse response) {
+        User user = userRepository.findByEmail(email)
+                .orElseGet(() ->
+                        this.userRepository.save(User.builder()
+                                .name(name)
+                                .email(email)
+                                .build())
+                );
+
+
+        String jwtToken = jwtService.generateToken(user);
+        String refreshToken = jwtService.generateRefreshToken(user);
+        revokeAllUserTokens(user);
+        saveUserToken(user, jwtToken);
+
+        setJwtCookie(response, jwtToken,false); // Set the access token in a cookie
+        setRefreshTokenCookie(response, refreshToken,false);
+    }
+
+    @Override
     public void revokeAllUserTokens(User user) {
         var validUserTokens = tokenRepository.findAllValidTokenByUser(user.getId());
         if (validUserTokens.isEmpty())
@@ -203,9 +228,10 @@ public class UserServiceImpl implements  UserService{
                 var accessToken = jwtService.generateToken(user);
                 revokeAllUserTokens(user);
                 saveUserToken(user, accessToken);
+                setJwtCookie(response, accessToken,false); // Set the access token in a cooki
                 var authResponse = LoginResponse.builder()
-                        .accessToken(accessToken)
-                        .refreshToken(refreshToken)
+                        .accessToken("accesstoken regenerated")
+                        .refreshToken("refresh token is same")
                         .build();
                 new ObjectMapper().writeValue(response.getOutputStream(), authResponse);
 

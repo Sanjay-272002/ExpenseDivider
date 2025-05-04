@@ -25,8 +25,11 @@ public interface UserService {
      void saveUserToken(User user, String jwtToken) ;
      String getAuthenticatedUserId();
      List<Group> listgroups() throws GroupException;
-
+     void setJwtCookie(HttpServletResponse response, String token,boolean islogout);
+     void setRefreshTokenCookie(HttpServletResponse response, String refreshToken,boolean islogout);
     RegisterUserDto getProfile(String id) throws UserException;
 
     void updateProfile(RegisterUserDto request) throws UserException;
+
+    void handleOauthAuthentication(String name,String email,HttpServletResponse response);
 }
