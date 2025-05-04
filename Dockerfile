@@ -5,11 +5,16 @@ WORKDIR /app
 # Copy only files needed for dependency resolution first for better caching
 COPY build.gradle settings.gradle ./
 COPY gradle gradle
-RUN gradle dependencies --no-daemon || true
+# Make gradlew executable
+RUN chmod +x gradlew
 
-# Now copy everything else and build
+# Download dependencies (optional cache optimization)
+RUN ./gradlew dependencies --no-daemon || true
+
+# Copy the rest of the codebase
 COPY . .
-RUN gradle clean build --no-daemon
+
+RUN ./gradlew clean build --no-daemon
 
 # -------- Stage 2: Use JDK 23 to run the app --------
 FROM eclipse-temurin:23-jdk
