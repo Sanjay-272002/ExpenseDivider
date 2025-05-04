@@ -3,7 +3,7 @@ FROM gradle:8.5-jdk21 AS build
 WORKDIR /app
 
 # Copy only files needed for dependency resolution first for better caching
-COPY build.gradle settings.gradle gradle.properties ./
+COPY build.gradle settings.gradle ./
 COPY gradle gradle
 RUN gradle dependencies --no-daemon || true
 
