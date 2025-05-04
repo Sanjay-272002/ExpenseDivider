@@ -5,7 +5,7 @@ FROM eclipse-temurin:23-jdk
 ENV PORT=8090
 
 # Set workdir
-WORKDIR /appdocker build -t expense-backend .
+WORKDIR /app
 
 # Copy jar file
 COPY build/libs/app.jar app.jar
