@@ -1,32 +1,22 @@
-# -------- Stage 1: Build the Spring Boot app using Gradle --------
-FROM gradle:8.5-jdk21 AS build
+
+FROM eclipse-temurin:23-jdk AS build
 WORKDIR /app
 
-# Copy only files needed for dependency resolution first for better caching
-COPY build.gradle settings.gradle ./
+# Copy Gradle wrapper and build files
+COPY gradlew build.gradle settings.gradle ./
 COPY gradle gradle
+COPY src src
+RUN chmod +x ./gradlew
 
+# Build the JAR
+RUN ./gradlew clean bootJar
 
-# Download dependencies (optional cache optimization)
-RUN ./gradlew dependencies --no-daemon || true
-
-# Copy the rest of the codebase
-COPY . .
-
-RUN ./gradlew clean build --no-daemon
-
-# -------- Stage 2: Use JDK 23 to run the app --------
+# Stage 2: Run the application
 FROM eclipse-temurin:23-jdk
 WORKDIR /app
 
-# Optional: Set environment variable (used by Spring Boot, for example)
-ENV PORT=8090
-
-# Copy the built jar from the previous stage
+# Copy the JAR from the build stage
 COPY --from=build /app/build/libs/*.jar app.jar
 
-# Expose the app port
-EXPOSE 8090
-
-# Run the app
+EXPOSE 8080
 ENTRYPOINT ["java", "-jar", "app.jar"]
