@@ -81,27 +81,25 @@ public class UserServiceImpl implements  UserService{
     }
 
    public  void setJwtCookie(HttpServletResponse response, String token,boolean islogout) {
-        Cookie jwtCookie = new Cookie("accessToken", token);
-        jwtCookie.setHttpOnly(true);  // Make sure the cookie can't be accessed by JavaScript
-        jwtCookie.setSecure(true);    // Only send the cookie over HTTPS
-        jwtCookie.setPath("/");
-        if(islogout)
-            jwtCookie.setMaxAge(0);
-        else// The cookie is valid for the entire application
-             jwtCookie.setMaxAge(3600);    // Set expiration time for the cookie (1 hour)
-        response.addCookie(jwtCookie);
+       String cookieHeader = String.format(
+               "accessToken=%s; Max-Age=%d; Path=/; HttpOnly; Secure; SameSite=None",
+               token,
+               islogout ? 0 : 3600
+       );
+
+       response.addHeader("Set-Cookie", cookieHeader);
     }
 
     public void setRefreshTokenCookie(HttpServletResponse response, String refreshToken,boolean islogout) {
-        Cookie refreshTokenCookie = new Cookie("refreshToken", refreshToken);
-        refreshTokenCookie.setHttpOnly(true);
-        refreshTokenCookie.setSecure(true);
-        refreshTokenCookie.setPath("/");
-        if(islogout)
-            refreshTokenCookie.setMaxAge(0);
-        else
-            refreshTokenCookie.setMaxAge(30 * 24 * 60 * 60); //30days
-        response.addCookie(refreshTokenCookie);
+        int maxAge = islogout ? 0 : (30 * 24 * 60 * 60); // 30 days
+
+        String cookieHeader = String.format(
+                "refreshToken=%s; Max-Age=%d; Path=/; HttpOnly; Secure; SameSite=None",
+                refreshToken,
+                maxAge
+        );
+
+        response.addHeader("Set-Cookie", cookieHeader);
     }
 
     @Override
