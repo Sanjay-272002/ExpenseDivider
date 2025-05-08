@@ -110,7 +110,7 @@ public class SecurityConfiguration {
     CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
 
-        configuration.setAllowedOrigins(List.of("http://localhost:3000","https://evenup.vercel.app/"));
+        configuration.setAllowedOrigins(List.of("http://localhost:3000","https://evenup.vercel.app"));
         configuration.setAllowedMethods(List.of("GET","POST","PUT","PATCH","DELETE"));
         configuration.setAllowedHeaders(List.of("Authorization","Content-Type"));
         configuration.setAllowCredentials(true);

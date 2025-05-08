@@ -83,7 +83,7 @@ public class UserServiceImpl implements  UserService{
    public  void setJwtCookie(HttpServletResponse response, String token,boolean islogout) {
         Cookie jwtCookie = new Cookie("accessToken", token);
         jwtCookie.setHttpOnly(true);  // Make sure the cookie can't be accessed by JavaScript
-        jwtCookie.setSecure(false);    // Only send the cookie over HTTPS
+        jwtCookie.setSecure(true);    // Only send the cookie over HTTPS
         jwtCookie.setPath("/");
         if(islogout)
             jwtCookie.setMaxAge(0);
