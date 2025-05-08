@@ -70,7 +70,7 @@ public class SecurityConfiguration {
                 .authenticationProvider(authenticationProvider) // Set the custom authentication provider
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .logout(logout ->
-                        logout.logoutUrl("/api/v1/auth/logout")
+                        logout.logoutUrl("/auth/logout")
                                 .addLogoutHandler((request, response, auth) -> {
                                     for (Cookie cookie : request.getCookies()) {
                                         String cookieName = cookie.getName();
