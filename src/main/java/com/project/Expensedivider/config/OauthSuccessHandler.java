@@ -2,6 +2,7 @@ package com.project.Expensedivider.config;
 
 import com.project.Expensedivider.user.*;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.hibernate.validator.internal.util.stereotypes.Lazy;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
@@ -23,6 +24,8 @@ public class OauthSuccessHandler implements AuthenticationSuccessHandler {
     @Autowired
     private   UserService userService;
 
+    @Value("${FRONTEND_HOST}")
+    private String frontendHost;
 
 
     @Override
@@ -38,7 +41,6 @@ public class OauthSuccessHandler implements AuthenticationSuccessHandler {
         JwtResponseDto authResponse = userService.handleOauthAuthentication(name, email, response);
         String accessToken = authResponse.getAccessToken();
         String refreshToken = authResponse.getRefreshToken();
-        String frontendHost = System.getenv("FRONTEND_HOST");
         String redirectUrl = String.format(
                 "%s/dashboard/overview?accessToken=%s&refreshToken=%s",
                 frontendHost, accessToken, refreshToken
