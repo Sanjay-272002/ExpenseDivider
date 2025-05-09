@@ -38,9 +38,10 @@ public class OauthSuccessHandler implements AuthenticationSuccessHandler {
         JwtResponseDto authResponse = userService.handleOauthAuthentication(name, email, response);
         String accessToken = authResponse.getAccessToken();
         String refreshToken = authResponse.getRefreshToken();
+        String frontendHost = System.getenv("FRONTEND_HOST");
         String redirectUrl = String.format(
-                "http://localhost:3000/dashboard/overview?accessToken=%s&refreshToken=%s",
-                accessToken, refreshToken
+                "%s/dashboard/overview?accessToken=%s&refreshToken=%s",
+                frontendHost, accessToken, refreshToken
         );
         // Redirect to frontend with JWT
         response.sendRedirect(redirectUrl);
