@@ -1,9 +1,6 @@
 package com.project.Expensedivider.config;
 
-import com.project.Expensedivider.user.JwtService;
-import com.project.Expensedivider.user.User;
-import com.project.Expensedivider.user.UserRepository;
-import com.project.Expensedivider.user.UserService;
+import com.project.Expensedivider.user.*;
 import lombok.RequiredArgsConstructor;
 import org.hibernate.validator.internal.util.stereotypes.Lazy;
 import org.springframework.security.core.Authentication;
@@ -38,8 +35,14 @@ public class OauthSuccessHandler implements AuthenticationSuccessHandler {
         String name = (String) attributes.get("name");
 
         // Save user if not already present
-        userService.handleOauthAuthentication(name,email,response);
+        JwtResponseDto authResponse = userService.handleOauthAuthentication(name, email, response);
+        String accessToken = authResponse.getAccessToken();
+        String refreshToken = authResponse.getRefreshToken();
+        String redirectUrl = String.format(
+                "http://localhost:3000/dashboard/overview?accessToken=%s&refreshToken=%s",
+                accessToken, refreshToken
+        );
         // Redirect to frontend with JWT
-        response.sendRedirect("http://localhost:3000/dashboard/overview" );
+        response.sendRedirect(redirectUrl);
     }
 }

@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 
 
 public interface UserService {
@@ -31,5 +32,7 @@ public interface UserService {
 
     void updateProfile(RegisterUserDto request) throws UserException;
 
-    void handleOauthAuthentication(String name,String email,HttpServletResponse response);
+    JwtResponseDto handleOauthAuthentication(String name,String email,HttpServletResponse response);
+
+    void exchangeTokens(Map<String, String> tokens, HttpServletResponse response);
 }

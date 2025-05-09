@@ -21,10 +21,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import jakarta.servlet.http.Cookie;
 import java.io.IOException;
-import java.util.Base64;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
@@ -171,7 +168,7 @@ public class UserServiceImpl implements  UserService{
     }
 
     @Override
-    public void handleOauthAuthentication(String name,String email,HttpServletResponse response) {
+    public JwtResponseDto handleOauthAuthentication(String name,String email,HttpServletResponse response) {
         User user = userRepository.findByEmail(email)
                 .orElseGet(() ->
                         this.userRepository.save(User.builder()
@@ -186,9 +183,12 @@ public class UserServiceImpl implements  UserService{
         revokeAllUserTokens(user);
         saveUserToken(user, jwtToken);
 
-        setJwtCookie(response, jwtToken,false); // Set the access token in a cookie
-        setRefreshTokenCookie(response, refreshToken,false);
+//        setJwtCookie(response, jwtToken,false); // Set the access token in a cookie
+//        setRefreshTokenCookie(response, refreshToken,false);
+        return new JwtResponseDto(jwtToken,refreshToken);
     }
+
+
 
     @Override
     public void revokeAllUserTokens(User user) {
@@ -235,4 +235,14 @@ public class UserServiceImpl implements  UserService{
 
         }
     }
+
+    @Override
+    public void exchangeTokens(Map<String, String> tokens, HttpServletResponse response) {
+
+        String accessToken = tokens.get("accessToken");
+        String refreshToken = tokens.get("refreshToken");
+        setJwtCookie(response, accessToken,false); // Set the access token in a cookie
+        setRefreshTokenCookie(response, refreshToken,false);
+    }
+
 }

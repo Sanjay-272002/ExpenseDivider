@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/auth")
@@ -35,4 +36,6 @@ public class AuthUserController {
     public List<User> getuserdata() throws UserException{
         return userService.returnUserList();
    }
+
+
 }

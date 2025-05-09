@@ -57,6 +57,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             @NonNull HttpServletResponse response,
             @NonNull FilterChain filterChain
     ) throws ServletException, IOException {
+        System.out.println("jwt");
         if (request.getServletPath().contains("/auth")) {
             filterChain.doFilter(request, response);
             return;
@@ -70,6 +71,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
 //        try {
             final String jwt = authHeader.substring(7);
+            System.out.println("jwt"+" "+jwt);
             final String userEmail = jwtService.extractUsername(jwt);
           //  System.out.println("jwt: "+jwt+"userEmail  "+userEmail);
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
