@@ -2,6 +2,7 @@ package com.project.Expensedivider.user;
 
 import com.project.Expensedivider.Groups.Group;
 import com.project.Expensedivider.Groups.GroupException;
+import jakarta.mail.MessagingException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.http.ResponseEntity;
@@ -17,7 +18,7 @@ import java.util.Map;
 public interface UserService {
 
 
-     void register(RegisterUserDto request) throws UserException;
+     void register(RegisterUserDto request) throws UserException, MessagingException;
 
     LoginResponse authenticate(LoginUserDto request,HttpServletResponse response) throws UserException;
     List<User> returnUserList() throws UserException;

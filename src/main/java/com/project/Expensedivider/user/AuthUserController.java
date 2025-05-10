@@ -1,5 +1,6 @@
 package com.project.Expensedivider.user;
 
+import jakarta.mail.MessagingException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -18,7 +19,7 @@ public class AuthUserController {
     private final UserService userService;
 
     @PostMapping("/register")
-    public ResponseEntity<String> register ( @RequestBody RegisterUserDto request )throws UserException {
+    public ResponseEntity<String> register ( @RequestBody RegisterUserDto request ) throws UserException, MessagingException {
         userService.register(request);
         return ResponseEntity.ok("User Registered Successfully");
     }

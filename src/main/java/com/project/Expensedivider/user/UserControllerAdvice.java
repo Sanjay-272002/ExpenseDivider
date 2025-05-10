@@ -16,7 +16,8 @@ import java.util.Map;
 public class UserControllerAdvice {
     @ExceptionHandler(value = {UserException.class})
     public ResponseEntity<String> handleUserException(UserException e){
-
+         if(e.getMessage().equals("User's email yet to be verified"))
+             return new ResponseEntity<>(e.getMessage(), HttpStatus.FORBIDDEN);
         return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
     }
     @ResponseStatus(HttpStatus.BAD_REQUEST)
@@ -31,4 +32,6 @@ public class UserControllerAdvice {
         });
         return errors;
     }
+
+
 }

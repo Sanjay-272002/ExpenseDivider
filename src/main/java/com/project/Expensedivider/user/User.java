@@ -39,7 +39,8 @@ public class User implements UserDetails {
     @Lob
     @Column(name = "profile_image", nullable = true)
     private byte[] profileImage;
-
+    @Column(name = "email_verified", nullable = true)
+    private boolean emailVerified;
 
     @CreationTimestamp
     @Column(updatable = false, name = "created_at")

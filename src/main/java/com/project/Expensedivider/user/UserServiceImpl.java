@@ -4,9 +4,12 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.project.Expensedivider.Groups.Group;
 import com.project.Expensedivider.Groups.GroupException;
 import com.project.Expensedivider.Groups.GroupRepository;
+import com.project.Expensedivider.emailverification.Email;
+import com.project.Expensedivider.emailverification.EmailService;
 import com.project.Expensedivider.token.Token;
 import com.project.Expensedivider.token.TokenRepository;
 import com.project.Expensedivider.token.TokenType;
+import jakarta.mail.MessagingException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.transaction.Transactional;
@@ -21,6 +24,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import jakarta.servlet.http.Cookie;
 import java.io.IOException;
+import java.time.LocalDateTime;
 import java.util.*;
 
 @Service
@@ -31,9 +35,10 @@ public class UserServiceImpl implements  UserService{
     private final UserRepository userRepository;
     private final TokenRepository tokenRepository;
     private final GroupRepository groupRepository;
+    private final EmailService emailService;
 //    private final AuthenticationManager authenticationManager;
     @Override
-    public void register(RegisterUserDto request) throws UserException{
+    public void register(RegisterUserDto request) throws UserException, MessagingException {
         Optional<User> emailcheck = this.userRepository.findByEmail(request.getEmail());
         User passwordCheck=this.userRepository.findByPassword(request.getPassword());
         if(emailcheck.isPresent())throw  new UserException("Email already exists.Please enter new email");
@@ -44,7 +49,9 @@ public class UserServiceImpl implements  UserService{
                 .password(BCrypt.hashpw(request.getPassword(), BCrypt.gensalt()))
                 .phonenumber(request.getPhonenumber())
                 .build();
-        this.userRepository.save(user);
+       User userdata = this.userRepository.save(user);
+       emailService.generateemailToken(userdata);
+
     }
 
     @Override
@@ -58,6 +65,7 @@ public class UserServiceImpl implements  UserService{
 //        );
         var user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new UserException("User not found"));
+        if(!user.isEmailVerified()) throw new UserException("User's email yet to be verified");
         var jwtToken="";
         var refreshToken ="";
         if (!BCrypt.checkpw(request.getPassword(), user.getPassword())) {
@@ -174,6 +182,7 @@ public class UserServiceImpl implements  UserService{
                         this.userRepository.save(User.builder()
                                 .name(name)
                                 .email(email)
+                                .emailVerified(true)
                                 .build())
                 );
 
