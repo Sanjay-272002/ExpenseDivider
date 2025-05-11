@@ -72,12 +72,13 @@ public class EmailServiceImpl implements EmailService {
         emailRepository.delete(evToken);
         return ResponseEntity.ok("Email verified");
     }
-
+     @Transactional
      @Override
     public ResponseEntity<String> resendEmail(String email) throws MessagingException, UserException {
         Optional<User> user = userRepository.findByEmail(email);
         if(!user.isPresent()) throw new UserException("user not found");
         if (user.isPresent() &&  user.get().isEmailVerified()) return ResponseEntity.badRequest().body("User already verified");// clear old
+         emailRepository.deleteByUser(user.get());
         generateemailToken(user.get());
         return ResponseEntity.ok("Verification email sent");
     }
