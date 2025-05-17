@@ -28,9 +28,11 @@ public class Expense {
     @Column(nullable = false)
     private String id;
 
-    BigDecimal netamount;
-    BigDecimal spentamount;
-    BigDecimal Expenseamount;
+    private BigDecimal netamount;
+    private BigDecimal spentamount;
+    private BigDecimal Expenseamount;
+
+    private BigDecimal paymentreceived;
 
     @ManyToOne
     @JoinColumn(name="group_id")
@@ -39,6 +41,7 @@ public class Expense {
     @ManyToOne
     @JoinColumn(name="user_id")
     private User user;
+
 
     @CreationTimestamp
     @Column(updatable = false, name = "created_at")

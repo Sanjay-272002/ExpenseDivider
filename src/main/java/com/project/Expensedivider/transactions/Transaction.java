@@ -1,6 +1,7 @@
 package com.project.Expensedivider.transactions;
 
 import com.project.Expensedivider.Groups.Group;
+import com.project.Expensedivider.category.Category;
 import com.project.Expensedivider.user.User;
 import jakarta.persistence.*;
 import lombok.*;
@@ -28,7 +29,7 @@ public class Transaction {
 
     private String name;
 
-    BigDecimal amount;
+    private BigDecimal amount;
 
     @ManyToOne
     @JoinColumn(name="group_id")
@@ -49,6 +50,12 @@ public class Transaction {
     @Lob
     @Column(name = "invoice", nullable = true)
     private byte[] invoice;
+
+    @ManyToOne
+    @JoinColumn(name = "category_id", nullable = false)
+    private Category category;
+
+    private BigDecimal share;
 
     @CreationTimestamp
     @Column(updatable = false, name = "created_at")

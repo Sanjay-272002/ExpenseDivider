@@ -1,6 +1,7 @@
 package com.project.Expensedivider.Groups;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.project.Expensedivider.category.Category;
 import com.project.Expensedivider.user.User;
 import jakarta.persistence.*;
 import lombok.*;
@@ -37,6 +38,13 @@ public class Group {
             joinColumns = @JoinColumn(name = "group_id", referencedColumnName = "id"),
             inverseJoinColumns = @JoinColumn(name = "user_id", referencedColumnName = "id"))
     private List<User> user;
+    @ManyToOne
+    @JoinColumn(name = "category_id", nullable = false)
+    private Category category;
+
+    @Enumerated(EnumType.STRING) // Stores the enum as a string in the DB
+    @Column(nullable = false)
+    private Typeenum typeenum;
 
     @CreationTimestamp
     @Column(updatable = false, name = "created_at")
