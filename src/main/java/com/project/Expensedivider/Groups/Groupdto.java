@@ -1,5 +1,9 @@
 package com.project.Expensedivider.Groups;
 
+import com.project.Expensedivider.category.Category;
+import jakarta.persistence.Column;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -14,6 +18,7 @@ import java.util.List;
 public class Groupdto {
 
     private String name;
-    private String hostuserId;
     private List<String> userids;
+    private Category category;
+    private Typeenum typeenum;
 }

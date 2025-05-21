@@ -33,13 +33,14 @@ public class GroupServiceImpl implements GroupService {
     public Group createGroup(Groupdto request) throws GroupException, ExpenseException {
         Set<String> uniqueUserIds = new HashSet<>(request.getUserids());
         List<User> usersList = this.userRepository.findAllById(uniqueUserIds);
-        User hostuser=this.userRepository.findById(request.getHostuserId()).orElseThrow(() -> new GroupException("HostUser not found"));
+        String userId=this.userService.getAuthenticatedUserId();
+        User hostuser=this.userRepository.findById(userId).orElseThrow(() -> new GroupException("HostUser not found"));
         if (usersList.size() != uniqueUserIds.size()) {
             throw new IllegalArgumentException("Some user IDs are invalid.");
         }
         usersList.add(hostuser);
         int roomCode = 1000 + secureRandom.nextInt(9999);
-        var group=Group.builder().name(request.getName()).user(usersList).roomcode(String.valueOf(roomCode)).hostuserId(request.getHostuserId()).build();
+        var group=Group.builder().name(request.getName()).user(usersList).roomcode(String.valueOf(roomCode)).hostuserId(userId).build();
         Group groupObj=this.groupRepository.save(group);
         this.expenseService.createExpense(groupObj,usersList);
         return groupObj;
