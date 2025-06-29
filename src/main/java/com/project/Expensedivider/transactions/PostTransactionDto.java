@@ -24,5 +24,6 @@ public class PostTransactionDto {
    private  String Groupid;
 
     private String invoice;
+    private String category;
 
 }

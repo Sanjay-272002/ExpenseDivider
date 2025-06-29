@@ -1,8 +1,11 @@
 package com.project.Expensedivider.transactions;
 
+import com.project.Expensedivider.General.ApiResponse;
 import com.project.Expensedivider.Groups.Group;
 import com.project.Expensedivider.Groups.GroupException;
 import com.project.Expensedivider.Groups.GroupRepository;
+import com.project.Expensedivider.category.Categorrepository;
+import com.project.Expensedivider.category.Category;
 import com.project.Expensedivider.expense.Expense;
 import com.project.Expensedivider.expense.ExpenseException;
 import com.project.Expensedivider.expense.ExpenseRepository;
@@ -14,6 +17,8 @@ import lombok.SneakyThrows;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.text.SimpleDateFormat;
+import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -26,39 +31,43 @@ public class TransactionServiceImpl implements TransactionService {
    private final ExpenseRepository expenseRepository;
    private final GroupRepository groupRepository;
    private final ExpenseService expenseService;
-
+   private final Categorrepository categorrepository;
 
     @Override
     @Transactional
     public Transaction addTransaction(PostTransactionDto postTransactionDto) throws TransactionException, ExpenseException {
+        System.out.println("postTransactionDTO"+postTransactionDto);
         String userId=this.userService.getAuthenticatedUserId();
         User fromuser=this.userRepository.findById(userId).orElseThrow(() -> new TransactionException("User not found"));
         List<User> toUsers=this.userRepository.findAllById(postTransactionDto.getTouserids());
+        System.out.println("tousers"+toUsers);
         byte[] decodedInvoice =null;
         if(postTransactionDto.getInvoice()!=null)
             decodedInvoice=Base64.getDecoder().decode(postTransactionDto.getInvoice());
+        Category category=categorrepository.findById(postTransactionDto.getCategory()).get();
         Group groupData=this.groupRepository.findById(postTransactionDto.getGroupid()).orElseThrow(() -> new TransactionException("Group not found"));
-        var transaction = Transaction.builder().name(postTransactionDto.getName()).amount(postTransactionDto.getAmount()).fromuser(fromuser).touserdata(toUsers).invoice(decodedInvoice).group(groupData).build();
-        this.expenseService.handleExpense(groupData,fromuser,toUsers,postTransactionDto.getAmount());
+
+        BigDecimal split=this.expenseService.handleExpense(groupData,fromuser,toUsers,postTransactionDto.getAmount());
+        var transaction = Transaction.builder().name(postTransactionDto.getName()).amount(postTransactionDto.getAmount()).fromuser(fromuser).touserdata(toUsers).category(category).invoice(decodedInvoice).group(groupData).share(split).build();
         return this.transactionRepository.save(transaction);
     }
 
 
     @SneakyThrows
     @Override
-    public List<ListTransactionDto> listgrouptransaction(String groupId) throws TransactionException {
+    public List<ListTransactionDateDto> listgrouptransaction(String groupId) throws TransactionException {
 
         Group groupData = this.groupRepository.findById(groupId)
                 .orElseThrow(() -> new TransactionException("Group not found"));
 
         List<Transaction> transactionsData = this.transactionRepository.findByGroup(groupData);
 
-        List<ListTransactionDto> resultList;
+        List<ListTransactionDateDto> resultList;
         resultList= handleGetListTransaction(transactionsData);
         return resultList;
     }
     @SneakyThrows
-    public List<ListTransactionDto> handleGetListTransaction(List<Transaction> transactionsData)  throws TransactionException{
+    public  List<ListTransactionDateDto> handleGetListTransaction(List<Transaction> transactionsData)  throws TransactionException{
         List<ListTransactionDto> resultList =new ArrayList<>();
         for (Transaction transaction : transactionsData) {
 
@@ -84,6 +93,9 @@ public class TransactionServiceImpl implements TransactionService {
                     .collect(Collectors.toList());
             resultList.add(ListTransactionDto.builder()
                     .name(transaction.getName())
+                    .groupname(transaction.getGroup().getName())
+                    .category(transaction.getCategory().getName())
+                    .createddate(transaction.getCreatedAt())
                     .groupId(transaction.getGroup().getId())
                     .amount(transaction.getAmount())
                     .fromuser(fromUserDetails)
@@ -91,7 +103,17 @@ public class TransactionServiceImpl implements TransactionService {
                     .invoice(encodeImage(transaction.getInvoice()))
                     .build());
         }
-        return resultList;
+        Map<String, List<ListTransactionDto>> groupedMap = resultList.stream()
+                .collect(Collectors.groupingBy(t ->
+                        new SimpleDateFormat("yyyy-MM-dd").format(t.getCreateddate())
+                ));
+
+        // Convert the map into a list of TransactionsByDate objects
+        return groupedMap.entrySet().stream()
+                .map(entry -> new ListTransactionDateDto(entry.getKey(), entry.getValue()))
+                .sorted((a, b) -> b.getDate().compareTo(a.getDate())) // descending by date
+                .collect(Collectors.toList());
+
     }
     @Override
     public  RegisterUserDto convertToRegisterUserDto(User user) throws TransactionException{
@@ -120,6 +142,8 @@ public class TransactionServiceImpl implements TransactionService {
         receivers.sort((e1, e2) -> e2.getNetamount().compareTo(e1.getNetamount()));
         senders.sort(Comparator.comparing(Expense::getNetamount));
         List<DueDataDto> duelist =new ArrayList<>();
+        System.out.println("receivers"+ receivers);
+        System.out.println("senders"+ senders);
         // Balancing process
         while (!receivers.isEmpty()) {
             Expense sender = senders.get(0);
@@ -144,13 +168,17 @@ public class TransactionServiceImpl implements TransactionService {
     }
 
     @Override
-    public List<ListTransactionDto> getListUserTransactions() throws TransactionException,UserException {
+    public ApiResponse getListUserTransactions(LocalDate date) throws TransactionException,UserException {
+        System.out.println("listenters"+date);
         String userId=this.userService.getAuthenticatedUserId();
         User user=this.userRepository.findById(userId).orElseThrow(() -> new UserException("User not found"));
-        List<Transaction> userTransactions=this.transactionRepository.findByFromuser(user);
-        List<ListTransactionDto> resultList;
+        List<Transaction> userTransactions;
+            int month = date.getMonthValue();
+            int year = date.getYear();
+        userTransactions = (date == null) ? this.transactionRepository.findByFromuser(user) : this.transactionRepository.findByFromuserAndMonth(user, month, year);
+        List<ListTransactionDateDto> resultList;
         resultList= handleGetListTransaction(userTransactions);
-        return resultList;
+        return ApiResponse.builder().message("data listed successfully").data(resultList).success(true).build();
     }
 
 

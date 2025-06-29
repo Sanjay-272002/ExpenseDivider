@@ -22,7 +22,7 @@ public class ExpenseController {
     }
 
     @GetMapping("/getindividualexpense")
-    public ResponseEntity<List<Expense>> getIndividualExpense(@RequestParam String groupId) throws ExpenseException, GroupException {
+    public ResponseEntity<List<UserExpensedto>> getIndividualExpense(@RequestParam String groupId) throws ExpenseException, GroupException {
         return ResponseEntity.ok(this.expenseService.getindividualExpense(groupId));
     }
 

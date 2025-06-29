@@ -133,6 +133,7 @@ public class UserServiceImpl implements  UserService{
             throw new IllegalStateException("User is not authenticated");
         }
         User currentUser = (User) authentication.getPrincipal();
+        System.out.println(currentUser);
         return currentUser.getId();
     }
 

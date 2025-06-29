@@ -1,11 +1,14 @@
 package com.project.Expensedivider.transactions;
 
+import com.project.Expensedivider.General.ApiResponse;
 import com.project.Expensedivider.expense.ExpenseException;
 import com.project.Expensedivider.user.UserException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
+import java.util.Date;
 import java.util.List;
 
 @RestController
@@ -19,7 +22,7 @@ public class TransactionController {
     }
 
     @GetMapping("/listtransaction")
-    ResponseEntity<List<ListTransactionDto>> listGroupTransaction(@RequestParam String groupId) throws TransactionException{
+    ResponseEntity<List<ListTransactionDateDto>> listGroupTransaction(@RequestParam String groupId) throws TransactionException{
         return ResponseEntity.ok(this.transactionService.listgrouptransaction(groupId));
     }
 
@@ -28,8 +31,8 @@ public class TransactionController {
         return ResponseEntity.ok(this.transactionService.getDueList(groupId));
     }
     @GetMapping("/listusertransaction")
-    ResponseEntity<List<ListTransactionDto>> listUsertransactions() throws TransactionException, UserException {
-        return ResponseEntity.ok(this.transactionService.getListUserTransactions());
+    ResponseEntity<ApiResponse> listUsertransactions(@RequestParam LocalDate date) throws TransactionException, UserException {
+        return ResponseEntity.ok(this.transactionService.getListUserTransactions(date));
     }
 
 

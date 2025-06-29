@@ -11,7 +11,9 @@ import java.math.BigDecimal;
 @NoArgsConstructor
 @AllArgsConstructor
 public class UserExpensedto {
+    private String user_name;
    private BigDecimal totalSpent ;
     private BigDecimal totalOwed;
    private  BigDecimal totalOwe;
+   private  BigDecimal totalExpense;
 }

@@ -3,7 +3,6 @@ package com.project.Expensedivider.expense;
 import com.project.Expensedivider.Groups.Group;
 import com.project.Expensedivider.Groups.GroupException;
 import com.project.Expensedivider.Groups.GroupRepository;
-import com.project.Expensedivider.transactions.TransactionException;
 import com.project.Expensedivider.user.User;
 import com.project.Expensedivider.user.UserException;
 import com.project.Expensedivider.user.UserRepository;
@@ -13,6 +12,7 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -44,7 +44,7 @@ public class ExpenseServiceImpl implements ExpenseService{
     }
 
     @Override
-    public void handleExpense(Group group,User fromuser, List<User> users,BigDecimal amount) throws ExpenseException {
+    public BigDecimal handleExpense(Group group, User fromuser, List<User> users, BigDecimal amount) throws ExpenseException {
         Expense payerexpense=this.expenseRepository.findByGroupAndUser(group,fromuser);
         if(payerexpense==null) throw  new ExpenseException("User doesn't belong to any groupExpense");
         int totalPeople = users.size()+1;
@@ -55,6 +55,7 @@ public class ExpenseServiceImpl implements ExpenseService{
             if(lenduserexpense==null) throw  new ExpenseException("User doesn't belong to any groupExpense");
             updateExpense(lenduserexpense, equalSplit, null);
         }
+        return equalSplit;
     }
 
     @Override
@@ -71,8 +72,10 @@ public class ExpenseServiceImpl implements ExpenseService{
     @Override
     public UserExpensedto getUserExpense() throws ExpenseException,UserException {
         String userId=this.userService.getAuthenticatedUserId();
-        User user=this.userRepository.findById(userId).orElseThrow(() -> new UserException("User not found"));;
+        User user=this.userRepository.findById(userId).orElseThrow(() -> new UserException("User not found"));
+
         List <Expense> userExpense= this.expenseRepository.findByUser(user);
+        System.out.println(userExpense);
         BigDecimal totalspent= BigDecimal.valueOf(0);
         BigDecimal totalowe=BigDecimal.valueOf(0);
         BigDecimal totalowed = BigDecimal.valueOf(0);
@@ -85,6 +88,7 @@ public class ExpenseServiceImpl implements ExpenseService{
             }
         }
         var userExpenseData=UserExpensedto.builder().totalSpent(totalspent).totalOwe(totalowe).totalOwed(totalowed).build();
+        System.out.println(userExpenseData);
         return userExpenseData;
     }
 
@@ -96,8 +100,17 @@ public class ExpenseServiceImpl implements ExpenseService{
     }
 
     @Override
-    public List<Expense> getindividualExpense(String groupId) throws ExpenseException, GroupException {
+    public List<UserExpensedto> getindividualExpense(String groupId) throws ExpenseException, GroupException {
         Group group =this.groupRepository.findById(groupId).orElseThrow(() -> new GroupException("User not found"));;
-        return this.expenseRepository.findByGroup(group);
+        List<Expense> expensedata= this.expenseRepository.findByGroup(group);
+        List<UserExpensedto> userexpensedata=new ArrayList<>();
+        for(Expense data:expensedata){
+            var expdata =UserExpensedto.builder().user_name(data.getUser().getName()).totalSpent(data.getSpentamount()).totalOwe(data.getNetamount().compareTo(BigDecimal.ZERO)<0?data.getNetamount(): BigDecimal.valueOf(0))
+                    .totalOwed(data.getNetamount().compareTo(BigDecimal.ZERO)>0?data.getNetamount(): BigDecimal.valueOf(0)).totalExpense(data.getExpenseamount()).build();
+            userexpensedata.add(expdata);
+        }
+        return userexpensedata;
     }
+
+
 }

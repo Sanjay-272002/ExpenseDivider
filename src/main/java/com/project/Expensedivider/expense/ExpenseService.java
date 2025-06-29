@@ -12,10 +12,10 @@ public interface ExpenseService {
 
     public void createExpense(Group group, List<User> users) throws ExpenseException;
     public void removeExpense(Group group,  List<User> users) throws ExpenseException;
-    public void handleExpense(Group group, User user, List<User> users, BigDecimal amount) throws ExpenseException;
+    public BigDecimal handleExpense(Group group, User user, List<User> users, BigDecimal amount) throws ExpenseException;
     BigDecimal getTotalExpense(String groupId) throws ExpenseException, GroupException;
 
-    List<Expense> getindividualExpense(String groupId) throws ExpenseException,GroupException;
+    List<UserExpensedto> getindividualExpense(String groupId) throws ExpenseException,GroupException;
 
     UserExpensedto getUserExpense() throws ExpenseException, UserException;
 }

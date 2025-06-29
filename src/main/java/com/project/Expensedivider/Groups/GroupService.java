@@ -1,15 +1,16 @@
 package com.project.Expensedivider.Groups;
 
+import com.project.Expensedivider.General.ApiResponse;
 import com.project.Expensedivider.expense.ExpenseException;
 import org.springframework.http.ResponseEntity;
 
-import java.security.Principal;
 import java.util.List;
+import java.util.Map;
 
 public interface GroupService {
-    Group createGroup(Groupdto request) throws GroupException, ExpenseException;
+    ResponseEntity<Map<String, Object>> createGroup(Groupdto request) throws GroupException, ExpenseException;
 
-    ResponseEntity<String> joinGroup(String roomcode) throws GroupException, ExpenseException;
+    ResponseEntity<ApiResponse> joinGroup(String roomcode) throws GroupException, ExpenseException;
 
     ResponseEntity<String> addPeople(List<String> userids,String groupid) throws GroupException, ExpenseException;
 

@@ -1,24 +1,19 @@
 package com.project.Expensedivider.Groups;
 
+import com.project.Expensedivider.General.ApiResponse;
+import com.project.Expensedivider.category.Categorrepository;
+import com.project.Expensedivider.category.Category;
 import com.project.Expensedivider.expense.ExpenseException;
 import com.project.Expensedivider.expense.ExpenseService;
 import com.project.Expensedivider.user.User;
-import com.project.Expensedivider.user.UserException;
 import com.project.Expensedivider.user.UserRepository;
 import com.project.Expensedivider.user.UserService;
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
-import java.security.Principal;
 import java.security.SecureRandom;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
@@ -28,26 +23,32 @@ public class GroupServiceImpl implements GroupService {
     private final UserRepository userRepository;
     private final UserService userService;
     private final ExpenseService expenseService;
+    private final Categorrepository categorrepository;
     private final SecureRandom secureRandom=new SecureRandom();
     @Override
-    public Group createGroup(Groupdto request) throws GroupException, ExpenseException {
-        Set<String> uniqueUserIds = new HashSet<>(request.getUserids());
-        List<User> usersList = this.userRepository.findAllById(uniqueUserIds);
+    public ResponseEntity<Map<String, Object>> createGroup(Groupdto request) throws GroupException, ExpenseException {
+        Set<String> uniqueUserIds = new HashSet<>(request.getFriends());
+        List<User> usersList = new ArrayList<>(this.userRepository.findAllById(uniqueUserIds));
         String userId=this.userService.getAuthenticatedUserId();
         User hostuser=this.userRepository.findById(userId).orElseThrow(() -> new GroupException("HostUser not found"));
         if (usersList.size() != uniqueUserIds.size()) {
             throw new IllegalArgumentException("Some user IDs are invalid.");
         }
+        System.out.println(usersList+" "+uniqueUserIds);
         usersList.add(hostuser);
         int roomCode = 1000 + secureRandom.nextInt(9999);
-        var group=Group.builder().name(request.getName()).user(usersList).roomcode(String.valueOf(roomCode)).hostuserId(userId).build();
+        Category category=categorrepository.findById(request.getCategory()).get();
+        var group=Group.builder().name(request.getName()).user(usersList).roomcode(String.valueOf(roomCode)).hostuserId(userId).category(category).typeenum(request.getType()).build();
         Group groupObj=this.groupRepository.save(group);
         this.expenseService.createExpense(groupObj,usersList);
-        return groupObj;
+        Map<String, Object> response = new HashMap<>();
+        response.put("groupId", groupObj.getId());
+        response.put("code", groupObj.getRoomcode());
+        return ResponseEntity.ok(response);
     }
 
     @Override
-    public ResponseEntity<String> joinGroup(String roomcode) throws GroupException, ExpenseException {
+    public ResponseEntity<ApiResponse> joinGroup(String roomcode) throws GroupException, ExpenseException {
         String userId=this.userService.getAuthenticatedUserId();
         User userdata = this.userRepository.findById(userId).orElseThrow(() -> new GroupException("User not found"));
         Group group=this.groupRepository.findByRoomcode(roomcode).orElseThrow(() -> new GroupException("Group not found"));
@@ -56,7 +57,8 @@ public class GroupServiceImpl implements GroupService {
         List<User> userDataList = new ArrayList<>();
         userDataList.add(userdata);
         this.expenseService.createExpense(groupObj,userDataList);
-        return ResponseEntity.ok("Joined Group successfully");
+        var response=ApiResponse.builder().success(true).message("User Joined Group Successfully").data(group.getId()).build();
+        return ResponseEntity.ok(response);
     }
 
     @Override

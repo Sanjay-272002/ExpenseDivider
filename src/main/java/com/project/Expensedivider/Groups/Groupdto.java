@@ -18,7 +18,7 @@ import java.util.List;
 public class Groupdto {
 
     private String name;
-    private List<String> userids;
-    private Category category;
-    private Typeenum typeenum;
+    private List<String> friends;
+    private String category;
+    private Typeenum type;
 }

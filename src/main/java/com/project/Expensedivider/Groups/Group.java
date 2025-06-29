@@ -38,6 +38,7 @@ public class Group {
             joinColumns = @JoinColumn(name = "group_id", referencedColumnName = "id"),
             inverseJoinColumns = @JoinColumn(name = "user_id", referencedColumnName = "id"))
     private List<User> user;
+
     @ManyToOne
     @JoinColumn(name = "category_id", nullable = false)
     private Category category;
@@ -45,6 +46,10 @@ public class Group {
     @Enumerated(EnumType.STRING) // Stores the enum as a string in the DB
     @Column(nullable = false)
     private Typeenum typeenum;
+
+    @Lob
+    @Column(name = "Group_image", nullable = true)
+    private byte[] groupImage;
 
     @CreationTimestamp
     @Column(updatable = false, name = "created_at")
